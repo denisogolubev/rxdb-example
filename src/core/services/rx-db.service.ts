@@ -84,21 +84,32 @@ export class RxDbService {
   }
 
   public upsert<T>(key: string, data: T, cacheTime: number): Observable<RxDocument<any>> {
-    return from(this.appCollection<T>().upsert({
-      key,
-      cacheTime: new Date(new Date().setMinutes(new Date().getMinutes() + cacheTime)).toString(),
-      data: JSON.stringify(data)
-    }));
+    return from(this.appCollection<T>().findOne({selector: {key}}).exec())
+      .pipe(
+        concatMap((document: RxDocument<any>) => {
+          document && document.remove();
+          return this.appCollection<T>().insert({
+            key,
+            cacheTime: new Date(new Date().setMinutes(new Date().getMinutes() + cacheTime)).toString(),
+            data: JSON.stringify(data)
+          });
+        })
+      );
   }
 
+  /**
+   * @param key
+   * .findOne({selector: {key}}).$ if you need to check every change of this value in DB, it will works like a subject
+   * .findOne({selector: {key}}).exec() to get current value from db
+   */
   public get<T>(key: string): Observable<T> {
-    return from(this.appCollection<T>().findOne({selector: {key}}).exec())
+    return this.appCollection<T>().findOne({selector: {key}}).$
       .pipe(map((document: RxDocument<any>) => {
         try {
           return JSON.parse(document.get('data'));
         } catch (e) {
           console.error('Error in rx-db service', e);
-          return document.get('data');
+          return document?.get('data');
         }
       }));
   }

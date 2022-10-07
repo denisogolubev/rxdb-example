@@ -25,7 +25,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.dbService.createDB().subscribe();
     const key: string = 'SOME_KEY1';
-    const data: { name: string } = {name: 'Denis'};
+    const data: { name: string } = {name: 'Denis2'};
     const cacheTime: number = 2;
     setTimeout(() => {
       this.dbService.upsert<{ name: string }>(key, data, cacheTime).subscribe();
@@ -34,13 +34,17 @@ export class AppComponent implements OnInit {
     setTimeout(() => {
       this.dbService.get<{ name: string }>(key).subscribe((data: { name: string }) => {
         console.log('Value from DB: ', data);
-        this.title = data.name;
+        this.title = data?.name;
         this.cdr.detectChanges();
       });
     }, 3000);
 
     setTimeout(() => {
-      this.dbService.upsert<{ name: string }>(key, data, cacheTime).subscribe();
+      this.dbService.upsert<{ name: string }>(key, {name: 'Denis5'}, cacheTime).subscribe();
     }, 5000);
+
+    setTimeout(() => {
+      this.dbService.upsert<{ name: string }>(key, {name: 'Denis6'}, cacheTime).subscribe();
+    }, 6000);
   }
 }
